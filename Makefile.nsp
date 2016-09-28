@@ -12,12 +12,14 @@ GPU   = gpu_dfxvideo
 SPU    = spu_null
 #SPU   = spu_franxis
 
+#RECOMPILER = arm_old
+
 INTERPRETER = interpreter_pcsx
 #INTERPRETER = interpreter_new
 
-#GTE   = gte_pcsx
+GTE   = gte_pcsx
 #GTE    = gte_new
-GTE   = gte_old
+#GTE   = gte_old
 
 RM     = rm -f
 MD     = mkdir
@@ -33,7 +35,7 @@ BIOS_FILE = \"scph1001.bin.tns\"
 MCD1_FILE = \"mcd001.mcr.tns\"
 MCD2_FILE = \"mcd002.mcr.tns\"
 
-CFLAGS = -Os -fdata-sections -ffunction-sections -fpermissive \
+CFLAGS = -O0 -g -fdata-sections -ffunction-sections -D__TINSPIRE \
 	-Wall -Wunused -Wpointer-arith \
 	-Wno-sign-compare -Wno-cast-align \
 	-Isrc -Isrc/spu/$(SPU) -D$(SPU) -Isrc/gpu/$(GPU) \
@@ -41,21 +43,7 @@ CFLAGS = -Os -fdata-sections -ffunction-sections -fpermissive \
 	-Isrc/gte/$(GTE) -D$(INTERPRETER) -D$(GTE) \
 	-DBIOS_FILE=$(BIOS_FILE) -DMCD1_FILE=$(MCD1_FILE) \
 	-DMCD2_FILE=$(MCD2_FILE) \
-	-DINLINE="static __inline__" -Dasm="__asm__ __volatile__"
-
-#CFLAGS += -DDEBUG_IO_CYCLE_COUNTER
-#CFLAGS += -DDEBUG_FAST_MEMORY
-#CFLAGS += -DPROFILER_PCSX4ALL
-#CFLAGS += -DPROFILER_PCSX4ALL_RESET=6000
-#CFLAGS += -DDEBUG_PCSX4ALL
-#CFLAGS += -DDEBUG_PCSX4ALL_FFLUSH
-#CFLAGS += -DDEBUG_START=2327
-#CFLAGS += -DDEBUG_START=0
-#CFLAGS += -DDEBUG_CPU
-#CFLAGS += -DDEBUG_CPU_OPCODES
-#CFLAGS += -DDEBUG_FRAME
-#CFLAGS += -DAUTOEVENTS
-#CFLAGS += -DAUTOEVENTS_MAX=8000
+	-DINLINE="static __inline__" -Dasm="__asm__ __volatile__" \
 
 LDFLAGS = -Wl,--as-needed -Wl,--gc-sections -flto
 

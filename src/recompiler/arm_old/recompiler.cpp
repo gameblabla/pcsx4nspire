@@ -488,6 +488,7 @@ static void recRecompile() {
 		if (branch) {
 			branch = 0;
 			//sys_cacheflush(armPtr_old,armPtr);
+			__builtin___clear_cache (armPtr_old, armPtr);
 			return;
 		}
 	}
@@ -498,6 +499,7 @@ static void recRecompile() {
 
 	iRet();
 	
+	__builtin___clear_cache (armPtr_old, armPtr);
 	//sys_cacheflush(armPtr_old,armPtr);
 }
 

@@ -1,3 +1,5 @@
+CC = gcc-6
+CXX = g++-6
 
 TARGET = pcsx4all
 PORT   = sdl
@@ -15,8 +17,8 @@ SPU    = spu_null
 INTERPRETER = interpreter_pcsx
 #INTERPRETER = interpreter_new
 
-#GTE   = gte_pcsx
-GTE    = gte_new
+GTE   = gte_pcsx
+#GTE    = gte_new
 
 RM     = rm -f
 MD     = mkdir

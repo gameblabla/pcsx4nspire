@@ -13,7 +13,6 @@
 #include "cdrom.h"
 #include "cdriso.h"
 #include "profiler.h"
-#include "n2DLib.h"
 
 /* PATH_MAX inclusion */
 #ifdef __MINGW32__
@@ -21,8 +20,15 @@
 #endif
 
 
-//#define timer_delay(a)	wait_ticks(a*1000)
+#ifdef _TINSPIRE
+#include "n2DLib.h"
 #define timer_delay(a)	sleep(a)
+#else
+#include <SDL.h>
+#define timer_delay(a)	wait_ticks(a*1000)
+#endif
+//#define timer_delay(a)	wait_ticks(a*1000)
+
 
 #ifdef gpu_unai
 extern bool show_fps;
@@ -41,6 +47,7 @@ static inline void key_reset() { ret = 0; }
 
 static unsigned int key_read(void)
 {
+#ifdef _TINSPIRE
 	if (isKeyPressed(KEY_NSPIRE_UP))
 		ret |= KEY_UP;
 	else
@@ -96,8 +103,8 @@ static unsigned int key_read(void)
 	else
 		ret &= ~KEY_R;
 		
-		
-	/*SDL_Event event;
+#else
+	SDL_Event event;
 
 	while (SDL_PollEvent(&event))  {
 		switch (event.type) {
@@ -147,8 +154,8 @@ static unsigned int key_read(void)
 			break;
 		default: break;
 		}
-	}*/
-
+	}
+#endif
 
 	return ret;
 }
@@ -971,10 +978,6 @@ static MENUITEM gui_SettingsItems[] = {
 	{(char *)"[PSX] Forced XA updates ", NULL, &forcedxa_alter, &forcedxa_show},
 	{(char *)"[PSX] RCntFix           ", NULL, &RCntFix_alter, &RCntFix_show},
 	{(char *)"[PSX] VSyncWA           ", NULL, &VSyncWA_alter, &VSyncWA_show},
-#ifdef gpu_unai
-	{(char *)"[GPU] Show FPS          ", NULL, &fps_alter, &fps_show},
-	{(char *)"[GPU] Frame Limit       ", NULL, &framelimit_alter, &framelimit_show},
-#endif
 	{(char *)"[SPU] Audio sync        ", NULL, &syncaudio_alter, &syncaudio_show},
 	{(char *)"[SPU] IRQ fix           ", NULL, &spuirq_alter, &spuirq_show},
 #ifdef spu_pcsxrearmed

@@ -30,6 +30,8 @@
 
 //We try to emulate bios :) HELP US :P
 
+
+
 //#define PSXBIOS_LOG printf
 #ifdef PSXBIOS_LOG
 
@@ -894,8 +896,8 @@ void psxBios_qsort() { // 0x31
 }
 
 void psxBios_malloc(void) { // 33
-	unsigned int *chunk, *newchunk = NULL;
-	unsigned int dsize = 0, csize, cstat;
+	u32 *chunk, *newchunk = NULL;
+	u32 dsize = 0, csize, cstat;
 	int colflag;
 #ifdef PSXBIOS_LOG
 	PSXBIOS_LOG("psxBios_%s\n", biosA0n[0x33]);

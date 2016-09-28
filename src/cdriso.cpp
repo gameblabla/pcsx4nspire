@@ -415,7 +415,7 @@ static void *playthread(void *param)
 #ifdef _WIN32
 	_endthread();
 #else
-	pthread_exit(0);
+	/*pthread_exit(0);*/
 	return NULL;
 #endif
 }

@@ -8,11 +8,11 @@
 #include "plugins.h"
 #include "profiler.h"
 
-
-#include "n2DLib.h"
 #ifdef __TINSPIRE
 #include <libndls.h>
-
+#include "n2DLib.h"
+#else
+#include <SDL.h>
 #endif
 
 /* PATH_MAX inclusion */
@@ -45,8 +45,10 @@ enum {
 
 	DKEY_TOTAL
 };
-/*
-static SDL_Surface *screen;*/
+
+#ifndef _TINSPIRE
+static SDL_Surface *screen;
+#endif
 unsigned short *SCREEN;
 
 #ifdef gpu_unai
@@ -100,8 +102,11 @@ void pcsx4all_exit(void)
 		psxShutdown();
 	}
 
+#ifdef _TINSPIRE
 	deinitBuffering();
-	/*SDL_Quit();*/
+#else
+	SDL_Quit();
+#endif
 
 	// Store config to file
 	config_save();
@@ -352,7 +357,7 @@ void state_save()
 		toSaveState = 1;
 }
 
-/*
+#ifndef _TINSPIRE
 static struct {
 	int key;
 	int bit;
@@ -382,13 +387,15 @@ static struct {
 #endif
 	{ SDLK_RETURN,		DKEY_START },
 	{ 0, 0 }
-};*/
+};
+#endif
 
 static unsigned short pad1=0xffff;
 static unsigned short pad2=0xffff;
 
 void pad_update(void)
 {
+#ifdef _TINSPIRE
 	if (isKeyPressed(KEY_NSPIRE_UP))
 		pad1 &= ~(1 << DKEY_UP);
 	else
@@ -451,34 +458,17 @@ void pad_update(void)
 	else
 		pad1 |= (1 << DKEY_R1);
 		
-	if (isKeyPressed(KEY_NSPIRE_ESC)) {
+	if (isKeyPressed(KEY_NSPIRE_ESC)) 
+	{
 			if (autosavestate) {
 				toExit=1;
 				toSaveState=1;
 			} else
 				pcsx4all_exit();
-		/*emu_running = false;
-		GameMenu();
-		emu_running = true;
-		pad1 |= (1 << DKEY_START);
-		pad1 |= (1 << DKEY_CROSS);
-		video_clear();
-		video_flip();
-		video_clear();
-#ifdef gpu_unai
-		extern bool fb_dirty;
-		fb_dirty = true; // redraw screen
-#endif*/
 	}
 	
-	/*if (keys[SDLK_ESCAPE] && keys[SDLK_LALT]) {
-		pad1 &= ~(1 << DKEY_SELECT);
-		pad1 |= (1 << DKEY_CROSS);
-	} else {
-		pad1 |= (1 << DKEY_SELECT);
-	}*/
-		
-	/*SDL_Event event;
+#else
+	SDL_Event event;
 	Uint8 *keys = SDL_GetKeyState(NULL);
 
 	while (SDL_PollEvent(&event)) {
@@ -569,7 +559,8 @@ void pad_update(void)
 		fb_dirty = true; // redraw screen
 #endif
 	}
-#endif*/
+#endif
+#endif
 }
 
 unsigned short pad_read(int num)
@@ -592,11 +583,12 @@ static unsigned int buf_write_pos = 0;
 static unsigned buffered_bytes = 0;
 static int sound_initted = 0;
 static int sound_running = 0;
-
+/*
 SDL_mutex *sound_mutex;
-SDL_cond *sound_cv;
+SDL_cond *sound_cv;*/
 static unsigned int mutex = 0; // 0 - don't use mutex; 1 - use it
 
+/*
 static void sound_mix(void *unused, Uint8 *stream, int len)
 {
 #ifndef spu_null
@@ -626,12 +618,12 @@ static void sound_mix(void *unused, Uint8 *stream, int len)
 		SDL_UnlockMutex(sound_mutex);
 	}
 #endif
-}
+}*/
 
 void sound_init(void)
 {
 #ifndef spu_null
-	SDL_AudioSpec fmt;
+	/*SDL_AudioSpec fmt;
 
 	if (sound_initted)
 		return;
@@ -659,13 +651,13 @@ void sound_init(void)
 	}
 
 	sound_running = 0;
-	SDL_PauseAudio(0);
+	SDL_PauseAudio(0);*/
 #endif
 }
 
 void sound_close(void) {
 #ifndef spu_null
-	sound_running = 0;
+	/*sound_running = 0;
 
 	if (mutex) {
 		SDL_LockMutex(sound_mutex);
@@ -685,7 +677,7 @@ void sound_close(void) {
 	SDL_CloseAudio();
 	if (sound_buffer)
 		free(sound_buffer);
-	sound_buffer = NULL;
+	sound_buffer = NULL;*/
 #endif
 }
 
@@ -700,7 +692,7 @@ unsigned long sound_get(void) {
 void sound_set(unsigned char *pSound, long lBytes)
 {
 #ifndef spu_null
-	u8 *data = (u8 *)pSound;
+	/*u8 *data = (u8 *)pSound;
 	u8 *buffer = (u8 *)sound_buffer;
 
 	sound_running = 1;
@@ -726,7 +718,7 @@ void sound_set(unsigned char *pSound, long lBytes)
 	if (mutex) {
 		SDL_CondSignal(sound_cv);
 		SDL_UnlockMutex(sound_mutex);
-	}
+	}*/
 #endif
 }
 #endif
@@ -740,13 +732,7 @@ void video_flip(void)
 	if (emu_running && show_fps)
 		port_printf(5,5,msg);
 #endif
-#ifdef gpu_dfxvideo
-	/*if (emu_running && dfx_show_fps) {
-		char msg[256];
-		sprintf(msg, "FPS: %02.02f", fps_cur);
-		port_printf(5,5,msg);
-	}*/
-#endif
+
 
 #ifndef _TINSPIRE
 	if (SDL_MUSTLOCK(screen)) SDL_UnlockSurface(screen);
@@ -758,6 +744,11 @@ void video_flip(void)
 	updateScreen();
 	SCREEN = BUFF_BASE_ADDRESS;
 #endif
+}
+
+void get_ticks(unsigned int c)
+{
+	
 }
 
 /* This is used by gpu_dfxvideo only as it doesn't scale itself */
@@ -780,8 +771,11 @@ void video_set(unsigned short *pVideo, unsigned int width, unsigned int height)
 
 void video_clear(void)
 {
+#ifdef _TINSPIRE
 	clearBufferB();
-	//memset(screen->pixels, 0, 320*240);
+#else
+	memset(screen->pixels, 0, screen->pitch*screen->h);
+#endif
 }
 
 int main (int argc, char **argv)
@@ -1087,24 +1081,25 @@ int main (int argc, char **argv)
 	}
 
 
-	//SDL_Init(SDL_INIT_VIDEO);
+#ifndef _TINSPIRE
+	SDL_Init(SDL_INIT_VIDEO);
+#endif
 
 #if !defined(spu_pcsxrearmed)		//spu_pcsxrearmed handles its own audio backends
 	#ifndef spu_null
-	SDL_Init(SDL_INIT_AUDIO);
+	//SDL_Init(SDL_INIT_AUDIO);
 	#endif
 #endif
 
-	//atexit(SDL_Quit);
-/*
-#ifdef SDL_TRIPLEBUF
-	int flags = SDL_HWSURFACE | SDL_TRIPLEBUF;
-#else
-	//int flags = SDL_HWSURFACE | SDL_DOUBLEBUF;
-	int flags = SDL_SWSURFACE;
-#endif
-*/
+#ifdef _TINSPIRE
 	initBuffering();
+#else
+	screen = SDL_SetVideoMode(320, 240, 16, SDL_SWSURFACE);
+	if (!screen) {
+		puts("NO Set VideoMode 320x240x16");
+		exit(0);
+	}
+#endif
 /*
 	screen = SDL_SetVideoMode(320, 240, 16, flags);
 	if (!screen) {
@@ -1117,7 +1112,12 @@ int main (int argc, char **argv)
 
 	SCREEN = (Uint16 *)screen->pixels;
 */
+#ifndef _TINSPIRE
+	if (SDL_MUSTLOCK(screen)) SDL_LockSurface(screen);
+	SCREEN = (Uint16 *)screen->pixels;
+#else
 	SCREEN = BUFF_BASE_ADDRESS;
+#endif
 
 	if (argc < 2 || cdrfilename[0] == '\0') {
 		// Enter frontend main-menu:
