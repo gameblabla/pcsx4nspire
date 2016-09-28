@@ -22,9 +22,9 @@
 #define __ARMREC_H__
 
 // include basic types
-#include "../psxcommon.h"
-#include "../r3000a.h"
-#include "../psxhle.h"
+#include "psxcommon.h"
+#include "r3000a.h"
+#include "psxhle.h"
 
 #ifdef __cplusplus
 extern "C" {

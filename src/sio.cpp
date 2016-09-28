@@ -510,9 +510,12 @@ int LoadMcd(int mcd_num, char *mcd)
 	// If memcard filename does not contain .gme, .mem, or .vgs, go ahead
 	//  and convert it to native raw memcard format.
 	if (convert_data &&
-		!(strcasestr(mcd, ".gme") ||
+		/*!(strcasestr(mcd, ".gme") ||
 		  strcasestr(mcd, ".mem") ||
-		  strcasestr(mcd, ".vgs")) ) {
+		  strcasestr(mcd, ".vgs")) ) {*/
+		  !(strstr(mcd, ".gme") ||
+		  strstr(mcd, ".mem") ||
+		  strstr(mcd, ".vgs")) ) {
 		// Truncate file to 0 bytes, then write just the memcard data back
 		if ( (f = fopen(mcd, "wb")) == NULL ||
 		     fwrite(data, 1, MCD_SIZE, f) != MCD_SIZE ) {
@@ -563,11 +566,11 @@ int SaveMcd(char *mcd, char *data, uint32_t adr, int size)
 		}
 	}
 
-	if ( fseek(f, fpos, SEEK_SET)               ||
+	/*if ( fseek(f, fpos, SEEK_SET)               ||
 		 fwrite(data + adr, 1, size, f) != size ||
 		 fflush(f)                              ||
 		 fsync(fileno(f)) )
-		goto error;
+		goto error;*/
 
 	fclose(f);
 	return 0;
@@ -604,7 +607,8 @@ int CreateMcd(char *mcd)
 	if ( (f = fopen(mcd, "wb")) == NULL)
 		goto error;
 
-	if (strcasestr(mcd, ".gme"))
+	//if (strcasestr(mcd, ".gme"))
+	if (strstr(mcd, ".gme"))
 	{
 		// DexDrive .gme format
 		s = s + 3904;
@@ -653,7 +657,8 @@ int CreateMcd(char *mcd)
 		errchk_fputc(0xff, f);
 		while (s-- > (MCD_SIZE + 1))
 			errchk_fputc(0, f);
-	} else if (strcasestr(mcd, ".mem") || strcasestr(mcd, ".vgs"))
+	//} else if (strcasestr(mcd, ".mem") || strcasestr(mcd, ".vgs"))
+	} else if (strstr(mcd, ".mem") || strstr(mcd, ".vgs"))
 	{
 		// Connectix Virtual Gamestation .vgs/.mem format
 		s = s + 64;
@@ -749,9 +754,9 @@ int CreateMcd(char *mcd)
 	while ((s--) >= 0)
 		errchk_fputc(0, f);
 
-	if ( fflush(f) ||
+	/*if ( fflush(f) ||
 	     fsync(fileno(f)) )
-		goto error;
+		goto error;*/
 
 	fclose(f);
 	return 0;

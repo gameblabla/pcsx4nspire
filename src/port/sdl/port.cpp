@@ -7,7 +7,13 @@
 #include "r3000a.h"
 #include "plugins.h"
 #include "profiler.h"
-#include <SDL.h>
+
+
+#include "n2DLib.h"
+#ifdef __TINSPIRE
+#include <libndls.h>
+
+#endif
 
 /* PATH_MAX inclusion */
 #ifdef __MINGW32__
@@ -39,8 +45,8 @@ enum {
 
 	DKEY_TOTAL
 };
-
-static SDL_Surface *screen;
+/*
+static SDL_Surface *screen;*/
 unsigned short *SCREEN;
 
 #ifdef gpu_unai
@@ -78,7 +84,7 @@ void config_save();
 
 void pcsx4all_exit(void)
 {
-	if(SDL_MUSTLOCK(screen)) SDL_UnlockSurface(screen);
+	/*if(SDL_MUSTLOCK(screen)) SDL_UnlockSurface(screen);*/
 #ifdef DEBUG_FAST_MEMORY
 	printf("READS TOTAL = %iK, OK=%iK (%.2f%%), HW=%iK (%.2f%%), MH=%iK (%.2f%%)\n",(unsigned)(totalreads/1000LL),(unsigned)(totalreads_ok/1000LL),(((double)totalreads_ok)*100.0)/((double)totalreads),(unsigned)(totalreads_hw/1000LL),(((double)totalreads_hw)*100.0)/((double)totalreads),(unsigned)(totalreads_mh/1000LL),(((double)totalreads_mh)*100.0)/((double)totalreads));
 	printf("WRITES TOTAL = %iK, OK=%iK (%.2f%%), HW=%iK (%.2f%%), MH=%iK (%.2f%%)\n",(unsigned)(totalwrites/1000LL),(unsigned)(totalwrites_ok/1000LL),(((double)totalwrites_ok)*100.0)/((double)totalwrites),(unsigned)(totalwrites_hw/1000LL),(((double)totalwrites_hw)*100.0)/((double)totalwrites),(unsigned)(totalwrites_mh/1000LL),(((double)totalwrites_mh)*100.0)/((double)totalwrites));
@@ -94,7 +100,8 @@ void pcsx4all_exit(void)
 		psxShutdown();
 	}
 
-	SDL_Quit();
+	deinitBuffering();
+	/*SDL_Quit();*/
 
 	// Store config to file
 	config_save();
@@ -117,13 +124,15 @@ static char patchesdir[PATH_MAX] = "./.pcsx4all/patches";
 
 static void setup_paths()
 {
-#ifndef __WIN32__
+//#ifndef __WIN32__
+#if 0
 	home = getenv("HOME");
 #else
 	char buf[PATH_MAX];
 	home = getcwd(buf, PATH_MAX);
 #endif
-	if(home) {
+	if(home) 
+	{
 		sprintf(homedir, "%s/.pcsx4all", home);
 		sprintf(sstatesdir, "%s/sstates", homedir);
 		sprintf(memcardsdir, "%s/memcards", homedir);
@@ -163,14 +172,14 @@ void probe_lastdir()
 void config_load()
 {
 	FILE *f;
-	char *config = (char *)malloc(strlen(homedir) + strlen("/pcsx4all.cfg") + 1);
+	char *config = (char *)malloc(strlen(homedir) + strlen("/pcsx4all.cfg.tns") + 1);
 	char line[strlen("LastDir ") + MAXPATHLEN + 1];
 	int lineNum = 0;
 
 	if (!config)
 		return;
 
-	sprintf(config, "%s/pcsx4all.cfg", homedir);
+	sprintf(config, "%s/pcsx4all.cfg.tns", homedir);
 
 	f = fopen(config, "r");
 
@@ -295,12 +304,12 @@ void config_load()
 void config_save()
 {
 	FILE *f;
-	char *config = (char *)malloc(strlen(homedir) + strlen("/pcsx4all.cfg") + 1);
+	char *config = (char *)malloc(strlen(homedir) + strlen("/pcsx4all.cfg.tns") + 1);
 
 	if (!config)
 		return;
 
-	sprintf(config, "%s/pcsx4all.cfg", homedir);
+	sprintf(config, "%s/pcsx4all.cfg.tns", homedir);
 
 	f = fopen(config, "w");
 
@@ -329,7 +338,7 @@ void config_save()
 
 void state_load()
 {
-	sprintf(savename, "%s/%s.%d.sav", sstatesdir, CdromId, saveslot);
+	sprintf(savename, "%s/%s.%d.sav.tns", sstatesdir, CdromId, saveslot);
 	SaveState_filename = (char *)&savename;
 	if ((!toLoadState) && (!toSaveState))
 		toLoadState = 1;
@@ -337,12 +346,13 @@ void state_load()
 
 void state_save()
 {
-	sprintf(savename, "%s/%s.%d.sav", sstatesdir, CdromId, saveslot);
+	sprintf(savename, "%s/%s.%d.sav.tns", sstatesdir, CdromId, saveslot);
 	SaveState_filename = (char *)&savename;
 	if ((!toLoadState) && (!toSaveState))
 		toSaveState = 1;
 }
 
+/*
 static struct {
 	int key;
 	int bit;
@@ -372,14 +382,103 @@ static struct {
 #endif
 	{ SDLK_RETURN,		DKEY_START },
 	{ 0, 0 }
-};
+};*/
 
 static unsigned short pad1=0xffff;
 static unsigned short pad2=0xffff;
 
 void pad_update(void)
 {
-	SDL_Event event;
+	if (isKeyPressed(KEY_NSPIRE_UP))
+		pad1 &= ~(1 << DKEY_UP);
+	else
+		pad1 |= (1 << DKEY_UP);
+		
+	if (isKeyPressed(KEY_NSPIRE_LEFT))
+		pad1 &= ~(1 << DKEY_LEFT);
+	else
+		pad1 |= (1 << DKEY_LEFT);
+		
+	if (isKeyPressed(KEY_NSPIRE_RIGHT))
+		pad1 &= ~(1 << DKEY_RIGHT);
+	else
+		pad1 |= (1 << DKEY_RIGHT);
+		
+	if (isKeyPressed(KEY_NSPIRE_DOWN))
+		pad1 &= ~(1 << DKEY_DOWN);
+	else
+		pad1 |= (1 << DKEY_DOWN);
+		
+	if (isKeyPressed(KEY_NSPIRE_CTRL))
+		pad1 &= ~(1 << DKEY_CROSS);
+	else
+		pad1 |= (1 << DKEY_CROSS);
+		
+	if (isKeyPressed(KEY_NSPIRE_SHIFT))
+		pad1 &= ~(1 << DKEY_CIRCLE);
+	else
+		pad1 |= (1 << DKEY_CIRCLE);
+		
+	if (isKeyPressed(KEY_NSPIRE_VAR))
+		pad1 &= ~(1 << DKEY_SQUARE);
+	else
+		pad1 |= (1 << DKEY_SQUARE);
+		
+	if (isKeyPressed(KEY_NSPIRE_DEL))
+		pad1 &= ~(1 << DKEY_TRIANGLE);
+	else
+		pad1 |= (1 << DKEY_TRIANGLE);
+		
+	if (isKeyPressed(KEY_NSPIRE_TAB))
+	{
+		pad1 &= ~(1 << DKEY_SELECT);
+	}
+	else
+		pad1 |= (1 << DKEY_SELECT);
+		
+	if (isKeyPressed(KEY_NSPIRE_MENU))
+		pad1 &= ~(1 << DKEY_START);
+	else
+		pad1 |= (1 << DKEY_START);
+		
+	if (isKeyPressed(KEY_NSPIRE_BAR))
+		pad1 &= ~(1 << DKEY_L1);
+	else
+		pad1 |= (1 << DKEY_L1);
+		
+	if (isKeyPressed(KEY_NSPIRE_DOC))
+		pad1 &= ~(1 << DKEY_R1);
+	else
+		pad1 |= (1 << DKEY_R1);
+		
+	if (isKeyPressed(KEY_NSPIRE_ESC)) {
+			if (autosavestate) {
+				toExit=1;
+				toSaveState=1;
+			} else
+				pcsx4all_exit();
+		/*emu_running = false;
+		GameMenu();
+		emu_running = true;
+		pad1 |= (1 << DKEY_START);
+		pad1 |= (1 << DKEY_CROSS);
+		video_clear();
+		video_flip();
+		video_clear();
+#ifdef gpu_unai
+		extern bool fb_dirty;
+		fb_dirty = true; // redraw screen
+#endif*/
+	}
+	
+	/*if (keys[SDLK_ESCAPE] && keys[SDLK_LALT]) {
+		pad1 &= ~(1 << DKEY_SELECT);
+		pad1 |= (1 << DKEY_CROSS);
+	} else {
+		pad1 |= (1 << DKEY_SELECT);
+	}*/
+		
+	/*SDL_Event event;
 	Uint8 *keys = SDL_GetKeyState(NULL);
 
 	while (SDL_PollEvent(&event)) {
@@ -426,7 +525,6 @@ void pad_update(void)
 		k++;
 	}
 
-	/* Special key combos for GCW-Zero */
 #ifdef GCW_ZERO
 	// SELECT+B for psx's SELECT
 	if (keys[SDLK_ESCAPE] && keys[SDLK_LALT]) {
@@ -471,7 +569,7 @@ void pad_update(void)
 		fb_dirty = true; // redraw screen
 #endif
 	}
-#endif
+#endif*/
 }
 
 unsigned short pad_read(int num)
@@ -481,6 +579,7 @@ unsigned short pad_read(int num)
 
 //senquack - spu_pcsxrearmed has its own sound backends
 #if !defined(spu_pcsxrearmed)
+#ifndef spu_null
 
 #ifdef spu_franxis
 #define SOUND_BUFFER_SIZE (1024 * 3 * 2)
@@ -500,6 +599,7 @@ static unsigned int mutex = 0; // 0 - don't use mutex; 1 - use it
 
 static void sound_mix(void *unused, Uint8 *stream, int len)
 {
+#ifndef spu_null
 	u8 *data = (u8 *)stream;
 	u8 *buffer = (u8 *)sound_buffer;
 
@@ -525,6 +625,7 @@ static void sound_mix(void *unused, Uint8 *stream, int len)
 		SDL_CondSignal(sound_cv);
 		SDL_UnlockMutex(sound_mutex);
 	}
+#endif
 }
 
 void sound_init(void)
@@ -551,7 +652,7 @@ void sound_init(void)
 		sound_buffer = (unsigned *)calloc(SOUND_BUFFER_SIZE,1);
 
 	SDL_OpenAudio(&fmt, NULL);
-#endif
+
 	if (mutex) {
 		sound_mutex = SDL_CreateMutex();
 		sound_cv = SDL_CreateCond();
@@ -559,6 +660,7 @@ void sound_init(void)
 
 	sound_running = 0;
 	SDL_PauseAudio(0);
+#endif
 }
 
 void sound_close(void) {
@@ -597,6 +699,7 @@ unsigned long sound_get(void) {
 
 void sound_set(unsigned char *pSound, long lBytes)
 {
+#ifndef spu_null
 	u8 *data = (u8 *)pSound;
 	u8 *buffer = (u8 *)sound_buffer;
 
@@ -624,7 +727,9 @@ void sound_set(unsigned char *pSound, long lBytes)
 		SDL_CondSignal(sound_cv);
 		SDL_UnlockMutex(sound_mutex);
 	}
+#endif
 }
+#endif
 
 #endif //spu_pcsxrearmed
 
@@ -636,18 +741,23 @@ void video_flip(void)
 		port_printf(5,5,msg);
 #endif
 #ifdef gpu_dfxvideo
-	if (emu_running && dfx_show_fps) {
+	/*if (emu_running && dfx_show_fps) {
 		char msg[256];
 		sprintf(msg, "FPS: %02.02f", fps_cur);
 		port_printf(5,5,msg);
-	}
+	}*/
 #endif
 
+#ifndef _TINSPIRE
 	if (SDL_MUSTLOCK(screen)) SDL_UnlockSurface(screen);
 	SDL_Flip(screen);
 	if (SDL_MUSTLOCK(screen)) SDL_LockSurface(screen);
 
 	SCREEN = (Uint16 *)screen->pixels;
+#else
+	updateScreen();
+	SCREEN = BUFF_BASE_ADDRESS;
+#endif
 }
 
 /* This is used by gpu_dfxvideo only as it doesn't scale itself */
@@ -670,7 +780,8 @@ void video_set(unsigned short *pVideo, unsigned int width, unsigned int height)
 
 void video_clear(void)
 {
-	memset(screen->pixels, 0, screen->pitch*screen->h);
+	clearBufferB();
+	//memset(screen->pixels, 0, 320*240);
 }
 
 int main (int argc, char **argv)
@@ -706,12 +817,12 @@ int main (int argc, char **argv)
 	Config.SpuIrq=0; /* 1=SPU IRQ always on, fixes some games */
 
 	//senquack - Added config var SyncAudio and default setting is 1 (sync)
-	Config.SyncAudio=1;	/* 1=emu waits if audio output buffer is full */
+	Config.SyncAudio=0;	/* 1=emu waits if audio output buffer is full */
 
 	//senquack - Added option to allow queuing CDREAD_INT interrupts sooner
 	//           than they'd normally be issued when SPU's XA buffer is not
 	//           full. This fixes droupouts in music/speech on slow devices.
-	Config.ForcedXAUpdates=1;  /* default is 1=allow forced XA updates */
+	Config.ForcedXAUpdates=0;  /* default is 1=allow forced XA updates */
 
 	//zear - Added option to store the last visited directory.
 	strncpy(Config.LastDir, home, MAXPATHLEN); /* Defaults to home directory. */
@@ -771,8 +882,8 @@ int main (int argc, char **argv)
 	// gpu_dfxvideo
 	#ifdef gpu_dfxvideo
 	extern int UseFrameLimit; UseFrameLimit=0; // limit fps 1=on, 0=off
-	extern int UseFrameSkip; UseFrameSkip=0; // frame skip 1=on, 0=off
-	extern int iFrameLimit; iFrameLimit=0; // fps limit 2=auto 1=fFrameRate, 0=off
+	extern int UseFrameSkip; UseFrameSkip=1; // frame skip 1=on, 0=off
+	extern int iFrameLimit; iFrameLimit=2; // fps limit 2=auto 1=fFrameRate, 0=off
 	extern float fFrameRate; fFrameRate=200.0f; // fps
 	extern int iUseDither; iUseDither=0; // 0=off, 1=game dependant, 2=always
 	extern int iUseFixes; iUseFixes=0; // use game fixes
@@ -794,7 +905,7 @@ int main (int argc, char **argv)
 	// gpu_drhell
 	#ifdef gpu_drhell
 	extern unsigned int autoFrameSkip; autoFrameSkip=1; /* auto frameskip */
-	extern signed int framesToSkip; framesToSkip=0; /* frames to skip */
+	extern signed int framesToSkip; framesToSkip=4; /* frames to skip */
 	#endif
 
 	// gpu_unai
@@ -976,20 +1087,25 @@ int main (int argc, char **argv)
 	}
 
 
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE);
+	//SDL_Init(SDL_INIT_VIDEO);
 
 #if !defined(spu_pcsxrearmed)		//spu_pcsxrearmed handles its own audio backends
+	#ifndef spu_null
 	SDL_Init(SDL_INIT_AUDIO);
+	#endif
 #endif
 
-	atexit(SDL_Quit);
-
+	//atexit(SDL_Quit);
+/*
 #ifdef SDL_TRIPLEBUF
 	int flags = SDL_HWSURFACE | SDL_TRIPLEBUF;
 #else
-	int flags = SDL_HWSURFACE | SDL_DOUBLEBUF;
+	//int flags = SDL_HWSURFACE | SDL_DOUBLEBUF;
+	int flags = SDL_SWSURFACE;
 #endif
-
+*/
+	initBuffering();
+/*
 	screen = SDL_SetVideoMode(320, 240, 16, flags);
 	if (!screen) {
 		puts("NO Set VideoMode 320x240x16");
@@ -1000,6 +1116,8 @@ int main (int argc, char **argv)
 	SDL_WM_SetCaption("pcsx4all - SDL Version", "pcsx4all");
 
 	SCREEN = (Uint16 *)screen->pixels;
+*/
+	SCREEN = BUFF_BASE_ADDRESS;
 
 	if (argc < 2 || cdrfilename[0] == '\0') {
 		// Enter frontend main-menu:
@@ -1071,21 +1189,16 @@ int main (int argc, char **argv)
 	return 0;
 }
 
-unsigned get_ticks(void)
-{
-#ifdef TIME_IN_MSEC
-	return SDL_GetTicks();
-#else
-	return ((((unsigned long long)clock())*1000000ULL)/((unsigned long long)CLOCKS_PER_SEC));
-#endif
-}
-
 void wait_ticks(unsigned s)
 {
 #ifdef TIME_IN_MSEC
-	SDL_Delay(s);
+	//SDL_Delay(s);
 #else
-	SDL_Delay(s/1000);
+	//SDL_Delay(s/1000);
+#endif
+
+#ifdef _TINSPIRE
+	sleep(s/1000);
 #endif
 }
 
@@ -1173,9 +1286,4 @@ void port_printf(int x, int y, const char *text)
 		}
 		screen+=8;
 	}
-}
-
-void port_mute(void)
-{
-	//wiz_sound_thread_mute();
 }

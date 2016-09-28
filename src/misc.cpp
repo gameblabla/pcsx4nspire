@@ -589,7 +589,7 @@ int Load(const char *ExePath) {
 // zlib_open() returns a gzFile (as void*), or NULL on error
 static void *zlib_open(const char *name, boolean writing)
 {
-	void* gzfile_ptr = NULL;
+	/*void* gzfile_ptr = NULL;
 	// Default zlib compression level 6 is a bit slow.. 4 is faster
 	const char* zlib_mode = writing ? "rw4" : "r";
 
@@ -640,36 +640,36 @@ zlib_error:
 	if (SaveFuncs.fd != -1) close(SaveFuncs.fd);
 	SaveFuncs.fd = SaveFuncs.lib_fd = -1;
 	return NULL;
-#endif
+#endif*/
 }
 
 static int zlib_read(void *file, void *buf, u32 len)
 {
-	return gzread((gzFile)file, buf, len);
+	/*return gzread((gzFile)file, buf, len);*/
 }
 
 static int zlib_write(void *file, const void *buf, u32 len)
 {
-	return gzwrite((gzFile)file, (void*)buf, len);
+	/*return gzwrite((gzFile)file, (void*)buf, len);*/
 }
 
 static long zlib_seek(void *file, long offs, int whence)
 {
-	return gzseek((gzFile)file, offs, whence);
+	/*return gzseek((gzFile)file, offs, whence);*/
 }
 
 static int zlib_close(void *file)
 {
-	int retval = 0;
-	if (gzclose((gzFile)file) != Z_OK) retval = -1;
+	/*int retval = 0;
+	if (gzclose((gzFile)file) != Z_OK) retval = -1;*/
 
 #if !(defined(_WIN32) && !defined(__CYGWIN__))
-	if (fsync(SaveFuncs.fd)) retval = -1;
+	/*if (fsync(SaveFuncs.fd)) retval = -1;
 	if (close(SaveFuncs.fd)) retval = -1;
-	SaveFuncs.fd = SaveFuncs.lib_fd = -1;
+	SaveFuncs.fd = SaveFuncs.lib_fd = -1;*/
 #endif
 
-	return retval;
+	/*return retval;*/
 }
 
 int freeze_rw(void *file, enum FreezeMode mode, void *buf, unsigned len)
@@ -696,7 +696,7 @@ static const char PcsxHeader[32] = "STv4 PCSX v" PACKAGE_VERSION;
 static const u32 SaveVersion = 0x8b410004;
 
 int SaveState(const char *file) {
-	void* f;
+	/*void* f;
 	GPUFreeze_t *gpufP = NULL;
 	SPUFreeze_t *spufP = NULL;
 	unsigned char *pMem = NULL;
@@ -708,8 +708,6 @@ int SaveState(const char *file) {
 		return -1;
 	}
 
-	port_mute();
-	
 	if ( freeze_rw(f, FREEZE_SAVE, (void*)PcsxHeader, 32)              ||
 	     freeze_rw(f, FREEZE_SAVE, (void*)&SaveVersion, sizeof(u32))   ||
 	     freeze_rw(f, FREEZE_SAVE, (void*)&Config.HLE, sizeof(boolean)) )
@@ -777,11 +775,11 @@ error:
 		free(pMem);  free(gpufP);  free(spufP);
 		SaveFuncs.close(f);
 	}
-	return -1;
+	return -1;*/
 }
 
 int LoadState(const char *file) {
-	void* f;
+	/*void* f;
 	GPUFreeze_t *gpufP = NULL;
 	SPUFreeze_t *spufP = NULL;
 	u32 Size;
@@ -858,7 +856,8 @@ label_repeat_:
 	if ( freeze_rw(f, FREEZE_LOAD, &Size, 4)            ||
 	     (spufP = (SPUFreeze_t *)malloc(Size)) == NULL  ||
 	     freeze_rw(f, FREEZE_LOAD, spufP, Size)         ||
-	     (!SPU_freeze(FREEZE_LOAD, spufP)))
+	     (!SPU_freeze(FREEZE_LOAD, spufP))
+	     )
 		goto error;
 	free(spufP);
 	spufP = NULL;
@@ -904,11 +903,11 @@ error:
 	printf("Error in LoadState() loading file %s\n", file);
 	free(gpufP);  free(spufP);
 	SaveFuncs.close(f);
-	return -1;
+	return -1;*/
 }
 
 int CheckState(const char *file) {
-	void* f;
+	/*void* f;
 	char header[32];
 	u32 version;
 	boolean hle;
@@ -930,6 +929,6 @@ int CheckState(const char *file) {
 
 	if (strncmp("STv4 PCSX", header, 9) != 0 || version != SaveVersion || hle != Config.HLE)
 		return -1;
-
+*/
 	return 0;
 }

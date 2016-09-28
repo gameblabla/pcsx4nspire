@@ -16,33 +16,32 @@ INTERPRETER = interpreter_pcsx
 #INTERPRETER = interpreter_new
 
 #GTE   = gte_pcsx
-GTE    = gte_new
+#GTE    = gte_new
+GTE   = gte_old
 
 RM     = rm -f
 MD     = mkdir
-CC     = gcc
-CXX    = g++
-LD     = g++
+CC     = nspire-gcc
+CXX    = nspire-g++
+LD     = nspire-g++
 
 SYSROOT     := $(shell $(CC) --print-sysroot)
-SDL_CONFIG  := $(SYSROOT)/usr/bin/sdl-config
-SDL_CFLAGS  := $(shell $(SDL_CONFIG) --cflags)
-SDL_LIBS    := $(shell $(SDL_CONFIG) --libs)
+SDL_CONFIG  := 
+SDL_LIBS    := 
 
-BIOS_FILE = \"scph1001.bin\"
-MCD1_FILE = \"mcd001.mcr\"
-MCD2_FILE = \"mcd002.mcr\"
+BIOS_FILE = \"scph1001.bin.tns\"
+MCD1_FILE = \"mcd001.mcr.tns\"
+MCD2_FILE = \"mcd002.mcr.tns\"
 
-CFLAGS = -ggdb3 -O0 -g -DGCW_ZERO \
+CFLAGS = -Os -fdata-sections -ffunction-sections -fpermissive \
 	-Wall -Wunused -Wpointer-arith \
 	-Wno-sign-compare -Wno-cast-align \
 	-Isrc -Isrc/spu/$(SPU) -D$(SPU) -Isrc/gpu/$(GPU) \
 	-D$(GPU) -Isrc/port/$(PORT) \
 	-Isrc/gte/$(GTE) -D$(INTERPRETER) -D$(GTE) \
-	-DXA_HACK -DBIOS_FILE=$(BIOS_FILE) -DMCD1_FILE=$(MCD1_FILE) \
+	-DBIOS_FILE=$(BIOS_FILE) -DMCD1_FILE=$(MCD1_FILE) \
 	-DMCD2_FILE=$(MCD2_FILE) \
-	-DINLINE="static __inline__" -Dasm="__asm__ __volatile__" \
-	$(SDL_CFLAGS)
+	-DINLINE="static __inline__" -Dasm="__asm__ __volatile__"
 
 #CFLAGS += -DDEBUG_IO_CYCLE_COUNTER
 #CFLAGS += -DDEBUG_FAST_MEMORY
@@ -58,7 +57,7 @@ CFLAGS = -ggdb3 -O0 -g -DGCW_ZERO \
 #CFLAGS += -DAUTOEVENTS
 #CFLAGS += -DAUTOEVENTS_MAX=8000
 
-LDFLAGS = $(SDL_LIBS)
+LDFLAGS = -Wl,--as-needed -Wl,--gc-sections -flto
 
 OBJDIRS = \
 	obj obj/gpu obj/gpu/$(GPU) obj/spu obj/spu/$(SPU) \
@@ -71,7 +70,8 @@ OBJS = \
 	obj/r3000a.o obj/misc.o obj/plugins.o obj/psxmem.o obj/psxhw.o \
 	obj/psxcounters.o obj/psxdma.o obj/psxbios.o obj/psxhle.o obj/psxevents.o \
 	obj/interpreter/$(INTERPRETER)/psxinterpreter.o \
-	obj/mdec.o obj/decode_xa.o \
+	obj/mdec.o \
+	obj/decode_xa.o \
 	obj/cdriso.o obj/cdrom.o obj/ppf.o \
 	obj/sio.o obj/pad.o
 
@@ -81,8 +81,9 @@ OBJS += obj/spu/$(SPU)/spu.o
 
 OBJS += obj/port/$(PORT)/port.o
 OBJS += obj/port/$(PORT)/frontend.o
+OBJS += obj/port/$(PORT)/n2DLib.o
 
-OBJS += obj/profiler.o obj/debug.o
+#OBJS += obj/profiler.o obj/debug.o
 
 #******************************************
 # senquack - spu_pcsxrearmed section BEGIN
@@ -143,6 +144,11 @@ ifdef V
 else
 	HIDECMD:=@
 endif
+
+obj/recompiler/arm/recompiler.o: src/recompiler/arm/arm.h src/recompiler/arm/opcodes.h \
+	src/recompiler/arm/rec_alu.h src/recompiler/arm/rec_branch.h src/recompiler/arm/rec_gte.h \
+	src/recompiler/arm/rec_mem.h src/recompiler/arm/rec_misc.h src/recompiler/arm/recompiler.cpp \
+	src/recompiler/arm/risc_armv4le.h
 
 $(TARGET): $(OBJS)
 	@echo Linking $(TARGET)...

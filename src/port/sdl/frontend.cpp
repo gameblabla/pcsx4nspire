@@ -13,14 +13,16 @@
 #include "cdrom.h"
 #include "cdriso.h"
 #include "profiler.h"
-#include <SDL.h>
+#include "n2DLib.h"
 
 /* PATH_MAX inclusion */
 #ifdef __MINGW32__
 #include <limits.h>
 #endif
 
-#define timer_delay(a)	wait_ticks(a*1000)
+
+//#define timer_delay(a)	wait_ticks(a*1000)
+#define timer_delay(a)	sleep(a)
 
 #ifdef gpu_unai
 extern bool show_fps;
@@ -39,7 +41,63 @@ static inline void key_reset() { ret = 0; }
 
 static unsigned int key_read(void)
 {
-	SDL_Event event;
+	if (isKeyPressed(KEY_NSPIRE_UP))
+		ret |= KEY_UP;
+	else
+		ret &= ~KEY_UP;
+		
+	if (isKeyPressed(KEY_NSPIRE_LEFT))
+		ret |= KEY_LEFT;
+	else
+		ret &= ~KEY_LEFT;
+		
+	if (isKeyPressed(KEY_NSPIRE_RIGHT))
+		ret |= KEY_RIGHT;
+	else
+		ret &= ~KEY_RIGHT;
+		
+	if (isKeyPressed(KEY_NSPIRE_DOWN))
+		ret |= KEY_DOWN;
+	else
+		ret &= ~KEY_DOWN;
+		
+	if (isKeyPressed(KEY_NSPIRE_CTRL))
+		ret |= KEY_A;
+	else
+		ret &= ~KEY_A;
+		
+	if (isKeyPressed(KEY_NSPIRE_SHIFT))
+		ret |= KEY_B;
+	else
+		ret &= ~KEY_B;
+		
+	if (isKeyPressed(KEY_NSPIRE_VAR))
+		ret |= KEY_X;
+	else
+		ret &= ~KEY_X;
+		
+	if (isKeyPressed(KEY_NSPIRE_DEL))
+		ret |= KEY_Y;
+	else
+		ret &= ~KEY_Y;
+		
+	if (isKeyPressed(KEY_NSPIRE_ESC))
+		ret |= KEY_SELECT;
+	else
+		ret &= ~KEY_SELECT;
+		
+	if (isKeyPressed(KEY_NSPIRE_TAB))
+		ret |= KEY_L;
+	else
+		ret &= ~KEY_L;
+		
+	if (isKeyPressed(KEY_NSPIRE_DOC))
+		ret |= KEY_R;
+	else
+		ret &= ~KEY_R;
+		
+		
+	/*SDL_Event event;
 
 	while (SDL_PollEvent(&event))  {
 		switch (event.type) {
@@ -89,7 +147,7 @@ static unsigned int key_read(void)
 			break;
 		default: break;
 		}
-	}
+	}*/
 
 
 	return ret;
@@ -171,7 +229,7 @@ static const char *wildcards[] = {
 	//"z", "bz", "znx",
 
 	"bin", "img", "mdf", "iso", "cue",
-	"pbp", "cbn", NULL
+	"pbp", "cbn", "tns", NULL
 };
 
 static s32 check_ext(const char *name)
@@ -356,11 +414,11 @@ char *FileReq(char *dir, const char *ext, char *result)
 			row++;
 
 		video_flip();
-		timer_delay(75);
+		timer_delay(70);
 
 		if (keys & (KEY_A | KEY_B | KEY_X | KEY_Y | KEY_L | KEY_R |
 			    KEY_LEFT | KEY_RIGHT | KEY_UP | KEY_DOWN))
-			timer_delay(50);
+			timer_delay(45);
 	}
 
 	return NULL;
@@ -544,7 +602,7 @@ static int gui_select_multicd(bool swapping_cd)
 
 		if (keys & (KEY_A | KEY_B | KEY_X | KEY_Y | KEY_L | KEY_R |
 			    KEY_LEFT | KEY_RIGHT | KEY_UP | KEY_DOWN))
-			timer_delay(50);
+			timer_delay(45);
 	}
 
 }
@@ -637,21 +695,8 @@ static int bios_alter(u32 keys)
 static char *bios_show()
 {
 	static char buf[16] = "\0";
-	sprintf(buf, "%s", Config.HLE ? "HLE" : "scph1001.bin");
+	sprintf(buf, "%s", Config.HLE ? "HLE" : "scph1001.bin.tns");
 	return buf;
-}
-
-static int fps_alter(u32 keys)
-{
-#ifdef gpu_unai
-	if (keys & KEY_RIGHT) {
-		if (show_fps == false) show_fps = true;
-	} else if (keys & KEY_LEFT) {
-		if (show_fps == true) show_fps = false;
-	}
-
-#endif
-	return 0;
 }
 
 static char *fps_show()
@@ -1062,7 +1107,7 @@ static int gui_RunMenu(MENU *menu)
 
 		if (keys & (KEY_A | KEY_B | KEY_X | KEY_Y | KEY_L | KEY_R |
 			    KEY_LEFT | KEY_RIGHT | KEY_UP | KEY_DOWN))
-			timer_delay(50);
+			timer_delay(45);
 	}
 
 	return 0;

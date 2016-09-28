@@ -617,14 +617,14 @@ static void recDIV() {
 	if (autobias) cycles_pending+=34;
 	if (IsConst(_Rt_) && IsConst(_Rs_)) {
 		if (iRegs[_Rt_].k) {
-			#ifndef __arm__
+			/*#ifndef __arm__*/
 				MapConst(32, (s32)iRegs[_Rs_].k / (s32)iRegs[_Rt_].k); // psxRegs.GPR.n.lo
 				MapConst(33, (s32)iRegs[_Rs_].k % (s32)iRegs[_Rt_].k); // psxRegs.GPR.n.hi
-			#else
+			/*#else
 				s64 res=LSDIV((s32)iRegs[_Rs_].k,(s32)iRegs[_Rt_].k);
 				MapConst(32,(u32)res); // psxRegs.GPR.n.lo
 				MapConst(33,(res>>32)); // psxRegs.GPR.n.hi
-			#endif
+			#endif*/
 		}
 		return;
 	}
@@ -665,14 +665,14 @@ static void recDIVU() {
 	if (autobias) cycles_pending+=34;
 	if (IsConst(_Rt_) && IsConst(_Rs_)) {
 		if (iRegs[_Rt_].k) {
-			#ifndef __arm__
+			/*#ifndef __arm__*/
 				MapConst(32, (u32)iRegs[_Rs_].k / (u32)iRegs[_Rt_].k); // psxRegs.GPR.n.lo
 				MapConst(33, (u32)iRegs[_Rs_].k % (u32)iRegs[_Rt_].k); // psxRegs.GPR.n.hi
-			#else
+			/*#else
 				u64 res=LUDIV((u32)iRegs[_Rs_].k,(u32)iRegs[_Rt_].k);
 				MapConst(32,(u32)res); // psxRegs.GPR.n.lo
 				MapConst(33,(res>>32)); // psxRegs.GPR.n.hi
-			#endif
+			#endif*/
 		}
 		return;
 	}

@@ -28,6 +28,10 @@
 #include "psxmem.h"
 #include "arm.h"
 #include "port.h"
+#include <stdio.h>
+#include <stdlib.h>
+#define BOOL int
+#include <libndls.h>
 
 static u32 psxRecLUT[0x010000];
 
@@ -78,6 +82,38 @@ extern void (*recREG[32])();
 extern void (*recCP0[32])();
 extern void (*recCP2[64])();
 extern void (*recCP2BSC[32])();
+
+#define __NR_OABI_SYSCALL_BASE  0x900000
+#if defined(__thumb__) || defined(__ARM_EABI__)
+#define __NR_SYSCALL_BASE       0
+#else
+#define __NR_SYSCALL_BASE       __NR_OABI_SYSCALL_BASE
+#endif
+#define __NR_SYSCALL_BASE       0
+#define __ARM_NR_BASE                   (__NR_SYSCALL_BASE+0x0f0000)
+#define __ARM_NR_cacheflush             (__ARM_NR_BASE+2)
+
+static void sys_cacheflush(void *start, void *end)
+{
+#ifdef __ARM_EABI__
+	/* EABI version */
+	int num = __ARM_NR_BASE+2;
+	__asm__("mov  r0, %0 ;"
+		"mov  r1, %1 ;"
+		"mov  r2, #0 ;"
+		"mov  r7, %2 ;"
+		"swi  0" : : "r" (start), "r" (end), "r" (num)
+			: "r0", "r1", "r2", "r3", "r7");
+#else
+	/* OABI */
+	__asm__("mov  r0, %0 ;"
+		"mov  r1, %1 ;"
+		"mov  r2, #0 ;"
+		"swi  %2" : : "r" (start), "r" (end), "i" __ARM_NR_BASE+2
+			: "r0", "r1", "r2", "r3");
+#endif
+} 
+
 
 static void MapConst(u32 reg, u32 _const) {
 	if (IsMapped(reg)) HWRegs[iRegs[reg].reg].state=ST_UNK;
@@ -451,7 +487,7 @@ static void recRecompile() {
 
 		if (branch) {
 			branch = 0;
-			sys_cacheflush(armPtr_old,armPtr);
+			//sys_cacheflush(armPtr_old,armPtr);
 			return;
 		}
 	}
@@ -462,7 +498,7 @@ static void recRecompile() {
 
 	iRet();
 	
-	sys_cacheflush(armPtr_old,armPtr);
+	//sys_cacheflush(armPtr_old,armPtr);
 }
 
 static void recExecute() {

@@ -37,7 +37,7 @@
 #define fseeko fseek
 #define ftello ftell
 #else
-#include <pthread.h>
+//#include <pthread.h>
 #include <sys/time.h>
 #include <unistd.h>
 #endif
@@ -68,7 +68,7 @@ unsigned char *(*CDR_getBuffer)(void);
 #ifdef _WIN32
 static HANDLE threadid;
 #else
-static pthread_t threadid;
+/*static pthread_t threadid;*/
 #endif
 static unsigned int initial_offset = 0;
 static boolean playing = FALSE;
@@ -251,7 +251,7 @@ static void playthread(void *param)
 #else
 static void *playthread(void *param)
 #endif
-{
+{/*
 #ifdef DEBUG_ANALYSIS
 	dbg_anacnt_CDR_playthread++;
 #endif
@@ -324,7 +324,7 @@ static void *playthread(void *param)
 #else
 	pthread_exit(0);
 	return NULL;
-#endif
+#endif*/
 }
 #else
 //SPU_PCSXREARMED VERSION:
@@ -424,7 +424,7 @@ static void *playthread(void *param)
 
 // stop the CDDA playback
 static void stopCDDA() {
-	if (!playing) {
+	/*if (!playing) {
 		return;
 	}
 
@@ -433,12 +433,12 @@ static void stopCDDA() {
 	WaitForSingleObject(threadid, INFINITE);
 #else
 	pthread_join(threadid, NULL);
-#endif
+#endif*/
 }
 
 // start the CDDA playback
 static void startCDDA(void) {
-	if (playing) {
+	/*if (playing) {
 		stopCDDA();
 	}
 
@@ -450,7 +450,7 @@ static void startCDDA(void) {
 #else
 	pthread_create(&threadid, NULL, playthread, NULL);
 #endif
-#endif
+#endif*/
 }
 
 #ifdef spu_franxis
@@ -1403,106 +1403,7 @@ static int cdread_sub_mixed(FILE *f, unsigned int base, void *dest, int sector)
 	return ret;
 }
 
-static int uncompress2(void *out, unsigned long *out_size, void *in, unsigned long in_size)
-{
-	static z_stream z;
-	int ret = 0;
 
-	if (z.zalloc == NULL) {
-		// XXX: one-time leak here..
-		z.next_in = Z_NULL;
-		z.avail_in = 0;
-		z.zalloc = Z_NULL;
-		z.zfree = Z_NULL;
-		z.opaque = Z_NULL;
-		ret = inflateInit2(&z, -15);
-	}
-	else
-		ret = inflateReset(&z);
-	if (ret != Z_OK)
-		return ret;
-
-	z.next_in = (Bytef *)in;
-	z.avail_in = in_size;
-	z.next_out = (Bytef *)out;
-	z.avail_out = *out_size;
-
-	ret = inflate(&z, Z_NO_FLUSH);
-	//inflateEnd(&z);
-
-	*out_size -= z.avail_out;
-	return ret == 1 ? 0 : ret;
-}
-
-static int cdread_compressed(FILE *f, unsigned int base, void *dest, int sector)
-{
-	unsigned long cdbuffer_size, cdbuffer_size_expect;
-	unsigned int size;
-	int is_compressed;
-	off_t start_byte;
-	int ret, block;
-
-	if (base)
-		sector += base / 2352;
-
-	block = sector >> compr_img->block_shift;
-	compr_img->sector_in_blk = sector & ((1 << compr_img->block_shift) - 1);
-
-	if (block == compr_img->current_block) {
-		//printf("hit sect %d\n", sector);
-		goto finish;
-	}
-
-	if (sector >= compr_img->index_len * 16) {
-		printf("sector %d is past img end\n", sector);
-		return -1;
-	}
-
-	start_byte = compr_img->index_table[block] & ~OFF_T_MSB;
-	if (fseeko(cdHandle, start_byte, SEEK_SET) != 0) {
-		printf("seek error for block %d at %llx: ",
-			block, (long long)start_byte);
-		perror(NULL);
-		return -1;
-	}
-
-	is_compressed = !(compr_img->index_table[block] & OFF_T_MSB);
-	size = (compr_img->index_table[block + 1] & ~OFF_T_MSB) - start_byte;
-	if (size > sizeof(compr_img->buff_compressed)) {
-		printf("block %d is too large: %u\n", block, size);
-		return -1;
-	}
-
-	if (fread(is_compressed ? compr_img->buff_compressed : compr_img->buff_raw[0],
-				1, size, cdHandle) != size) {
-		printf("read error for block %d at %lx: ", block, start_byte);
-		perror(NULL);
-		return -1;
-	}
-
-	if (is_compressed) {
-		cdbuffer_size_expect = sizeof(compr_img->buff_raw[0]) << compr_img->block_shift;
-		cdbuffer_size = cdbuffer_size_expect;
-		ret = uncompress2(compr_img->buff_raw[0], &cdbuffer_size, compr_img->buff_compressed, size);
-		if (ret != 0) {
-			printf("uncompress failed with %d for block %d, sector %d\n",
-					ret, block, sector);
-			return -1;
-		}
-		if (cdbuffer_size != cdbuffer_size_expect)
-			printf("cdbuffer_size: %lu != %lu, sector %d\n", cdbuffer_size,
-					cdbuffer_size_expect, sector);
-	}
-
-	// done at last!
-	compr_img->current_block = block;
-
-finish:
-	if (dest != cdbuffer) // copy avoid HACK
-		memcpy(dest, compr_img->buff_raw[compr_img->sector_in_blk],
-			CD_FRAMESIZE_RAW);
-	return CD_FRAMESIZE_RAW;
-}
 
 static int cdread_2048(FILE *f, unsigned int base, void *dest, int sector)
 {
@@ -1582,16 +1483,6 @@ long CDR_open(void) {
 	else if (parsecue(GetIsoFile()) == 0) {
 		printf("[+cue]");
 	}
-	if (handlepbp(GetIsoFile()) == 0) {
-		printf("[pbp]");
-		CDR_getBuffer = CDR_getBuffer_compr;
-		cdimg_read_func = cdread_compressed;
-	}
-	else if (handlecbin(GetIsoFile()) == 0) {
-		printf("[cbin]");
-		CDR_getBuffer = CDR_getBuffer_compr;
-		cdimg_read_func = cdread_compressed;
-	}
 
 	if (!subChanMixed && opensubfile(GetIsoFile()) == 0) {
 		printf("[+sub]");
@@ -1604,7 +1495,7 @@ long CDR_open(void) {
 	// maybe user selected metadata file instead of main .bin ..
 	bin_filename = GetIsoFile();
 	if (ftello(cdHandle) < 2352 * 0x10) {
-		static const char *exts[] = { ".bin", ".BIN", ".img", ".IMG" };
+		static const char *exts[] = { ".bin", ".BIN", ".img", ".IMG", ".tns", ".TNS" };
 		FILE *tmpf = NULL;
 		size_t i;
 		char *p;
